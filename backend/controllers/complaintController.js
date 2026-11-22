@@ -1,31 +1,36 @@
 
+export const createComplaint = async (req, res, next) => {
+    try {
+        return res.status(501).json({
+            success: false,
+            message: 'Complaint creation pending database integration'
+        });
+    }
+    catch (error) {
+        next(error);
+    }
+};
 
-import {
-    createComplaint,
-    getMyComplaints,
-    getComplaintById
-} from '../controllers/complaintController.js';
+export const getMyComplaints = async (req, res, next) => {
+    try {
+        return res.status(501).json({
+            success: false,
+            message: 'Fetching complaints pending database integration'
+        });
+    }
+    catch (error) {
+        next(error);
+    }
+};
 
-// Student: Submit a complaint
-router.post(
-    '/',
-    protect,
-    authorize('student'),
-    validateComplaint,
-    createComplaint
-);
-
-// Student: View own complaints
-router.get(
-    '/my',
-    protect,
-    authorize('student'),
-    getMyComplaints
-);
-
-// View a particular complaint
-router.get(
-    '/:id',
-    protect,
-    getComplaintById
-);
+export const getComplaintById = async (req, res, next) => {
+    try {
+        return res.status(501).json({
+            success: false,
+            message: 'Fetching complaint details pending database integration'
+        });
+    }
+    catch (error) {
+        next(error);
+    }
+};
