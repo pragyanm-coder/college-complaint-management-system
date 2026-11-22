@@ -1,0 +1,161 @@
+/* ---------- Progress tracker ---------- */
+.tracker {
+  display: flex;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tracker li {
+  position: relative;
+  flex: 1;
+  font-size: 0.85rem;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.tracker li:not(:first-child)::before {
+  content: '';
+  position: absolute;
+  top: 16px;
+  right: 50%;
+  width: 100%;
+  height: 3px;
+  background: var(--border);
+}
+
+.tracker li.done::before,
+.tracker li.current::before {
+  background: var(--resolved);
+}
+
+.tracker li.done {
+  color: var(--text);
+}
+
+.tracker li.current {
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.tracker-dot {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  margin: 0 auto 8px;
+  font-weight: 700;
+  background: var(--surface);
+  border: 3px solid var(--border);
+  border-radius: 50%;
+}
+
+.tracker li.done .tracker-dot {
+  color: #fff;
+  background: var(--resolved);
+  border-color: var(--resolved);
+}
+
+.tracker li.current .tracker-dot {
+  color: var(--primary);
+  border-color: var(--primary);
+}
+
+/* ---------- Timeline ---------- */
+.timeline {
+  margin: 0;
+  padding: 0 0 0 22px;
+  list-style: none;
+  border-left: 2px solid var(--border);
+}
+
+.timeline-item {
+  position: relative;
+  padding: 0 0 22px 18px;
+}
+
+.timeline-item:last-child {
+  padding-bottom: 0;
+}
+
+.timeline-item::before {
+  content: '';
+  position: absolute;
+  top: 4px;
+  left: -30px;
+  width: 14px;
+  height: 14px;
+  background: var(--surface);
+  border: 3px solid var(--progress);
+  border-radius: 50%;
+}
+
+.timeline-item.remark::before {
+  border-color: var(--accent);
+}
+
+.timeline-item.latest::before {
+  background: var(--progress);
+}
+
+.timeline-date {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.timeline-text {
+  margin: 2px 0 0;
+  font-weight: 600;
+}
+
+.timeline-author {
+  margin: 2px 0 0;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.timeline-remark {
+  margin-top: 6px;
+  padding: 10px 14px;
+  background: var(--bg);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 8px 8px 0;
+}
+
+.timeline-remark p {
+  margin: 0;
+}
+
+.timeline-remark .timeline-author {
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+
+/* ---------- Star rating ---------- */
+.stars {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.stars button,
+.star {
+  display: inline-flex;
+  padding: 2px;
+  color: #94a3b8;
+  background: none;
+  border: none;
+  border-radius: 6px;
+}
+
+.stars button {
+  cursor: pointer;
+}
+
+.stars button:hover,
+.stars button.on,
+.star.on {
+  color: #f59e0b;
+}

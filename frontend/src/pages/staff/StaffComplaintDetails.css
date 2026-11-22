@@ -1,0 +1,13 @@
+.update-card {
+  margin-bottom: 20px;
+  background: #f8fbff;
+  border-color: #93c5fd;
+}
+
+.update-card h2 {
+  font-size: 1.2rem;
+}
+
+.update-hint {
+  color: var(--text-muted);
+}

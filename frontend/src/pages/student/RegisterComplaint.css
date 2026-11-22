@@ -1,0 +1,40 @@
+.complaint-card {
+  max-width: 760px;
+}
+
+.complaint-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 20px;
+}
+
+.form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.success-card {
+  text-align: center;
+}
+
+.success-card .form-actions {
+  justify-content: center;
+}
+
+.success-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  margin-bottom: 12px;
+  color: var(--resolved);
+  background: var(--resolved-bg);
+  border-radius: 50%;
+}
+
+@media (max-width: 640px) {
+  .complaint-form-grid {
+    grid-template-columns: 1fr;
+  }
+}

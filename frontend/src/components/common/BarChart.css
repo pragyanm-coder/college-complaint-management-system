@@ -1,0 +1,44 @@
+.bar-chart {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bar-chart li {
+  display: grid;
+  grid-template-columns: 170px 1fr 28px;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.9rem;
+}
+
+.bar-track {
+  height: 12px;
+  overflow: hidden;
+  background: var(--bg);
+  border-radius: 999px;
+}
+
+.bar-fill {
+  display: block;
+  height: 100%;
+  background: var(--primary);
+  border-radius: 999px;
+}
+
+.bar-value {
+  font-weight: 700;
+  text-align: right;
+}
+
+@media (max-width: 480px) {
+  .bar-chart li {
+    grid-template-columns: 1fr 28px;
+  }
+
+  .bar-label {
+    grid-column: 1 / -1;
+  }
+}
