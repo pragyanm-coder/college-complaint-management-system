@@ -1,23 +1,22 @@
 
 import express from 'express';
-import { validateRegister, validateLogin } from '../validators/authValidator.js';
+
+import {
+    validateRegister,
+    validateLogin
+} from '../validators/authValidator.js';
+
+import {
+    registerUser,
+    loginUser
+} from '../controllers/authController.js';
 
 const router = express.Router();
 
-// Registration route
-router.post('/register', validateRegister, (req, res) => {
-    res.status(200).json({
-        success: true,
-        message: 'Registration data validated successfully'
-    });
-});
+// Register a new user
+router.post('/register', validateRegister, registerUser);
 
-// Login route
-router.post('/login', validateLogin, (req, res) => {
-    res.status(200).json({
-        success: true,
-        message: 'Login data validated successfully'
-    });
-});
+// Login an existing user
+router.post('/login', validateLogin, loginUser);
 
 export default router;

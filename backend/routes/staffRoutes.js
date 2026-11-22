@@ -1,24 +1,32 @@
 
 import express from 'express';
-import { protect, authorize } from '../middleware/authMiddleware.js';
+
+import {
+    protect,
+    authorize
+} from '../middleware/authMiddleware.js';
+
+import {
+    getAssignedComplaints,
+    updateStaffComplaintStatus
+} from '../controllers/staffController.js';
 
 const router = express.Router();
 
 // Staff: View assigned complaints
-router.get('/complaints', protect, authorize('staff'), (req, res) => {
-    res.json({
-        success: true,
-        message: 'Staff complaints endpoint working'
-    });
-});
+router.get(
+    '/complaints',
+    protect,
+    authorize('staff'),
+    getAssignedComplaints
+);
 
-// Staff: Update complaint progress
-router.patch('/complaints/:id/status', protect, authorize('staff'), (req, res) => {
-    res.json({
-        success: true,
-        message: 'Staff status update endpoint working',
-        complaintId: req.params.id
-    });
-});
+// Staff: Update complaint status
+router.patch(
+    '/complaints/:id/status',
+    protect,
+    authorize('staff'),
+    updateStaffComplaintStatus
+);
 
 export default router;
