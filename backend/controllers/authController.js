@@ -1,38 +1,149 @@
 
+import User from '../models/User.js';
+import {
+    hashPassword,
+    comparePassword,
+    generateToken
+} from '../utils/authUtils.js';
 
-import jwt from 'jsonwebtoken';
-import bcrypt from 'bcryptjs';
+export const registerUser = async (req, res, next) =>
+{
+    try
+    {
+        const {
+            fullName,
+            email,
+            password,
+            rollNumber,
+            department,
+            year,
+            phone
+        } = req.body;
 
-// Register a new user
-export const registerUser = async (req, res, next) => {
-    try {
-        // TODO: Check whether email already exists.
-        // TODO: Hash password.
-        // TODO: Save user in MongoDB.
+        const normalizedEmail = email.trim().toLowerCase();
+        const normalizedRollNumber = rollNumber.trim();
 
-        res.status(501).json({
-            success: false,
-            message: 'Registration logic pending database integration'
+        const existingUser = await User.findOne(
+        {
+            $or:
+            [
+                { email: normalizedEmail },
+                { rollNumber: normalizedRollNumber }
+            ]
+        });
+
+        if(existingUser)
+        {
+            return res.status(409).json(
+            {
+                success: false,
+                message: 'Email or roll number already registered'
+            });
+        }
+
+        const hashedPassword = await hashPassword(password);
+
+        const user = await User.create(
+        {
+            fullName: fullName.trim(),
+            email: normalizedEmail,
+            password: hashedPassword,
+            rollNumber: normalizedRollNumber,
+            department: department.trim(),
+            year,
+            phone: phone.trim(),
+            role: 'student'
+        });
+
+        const token = generateToken(user._id, user.role);
+
+        return res.status(201).json(
+        {
+            success: true,
+            message: 'Registration successful',
+            data:
+            {
+                user:
+                {
+                    id: user._id,
+                    fullName: user.fullName,
+                    email: user.email,
+                    role: user.role
+                },
+                token
+            }
         });
     }
-    catch (error) {
+    catch(error)
+    {
+        if(error.code === 11000)
+        {
+            return res.status(409).json(
+            {
+                success: false,
+                message: 'Email or roll number already registered'
+            });
+        }
+
         next(error);
     }
 };
 
-// Login an existing user
-export const loginUser = async (req, res, next) => {
-    try {
-        // TODO: Find user by email.
-        // TODO: Compare password using bcrypt.
-        // TODO: Generate JWT token.
+export const loginUser = async (req, res, next) =>
+{
+    try
+    {
+        const { email, password } = req.body;
 
-        res.status(501).json({
-            success: false,
-            message: 'Login logic pending database integration'
+        const user = await User.findOne(
+        {
+            email: email.trim().toLowerCase()
+        }).select('+password');
+
+        if(!user)
+        {
+            return res.status(401).json(
+            {
+                success: false,
+                message: 'Invalid email or password'
+            });
+        }
+
+        const isMatch = await comparePassword(
+            password,
+            user.password
+        );
+
+        if(!isMatch)
+        {
+            return res.status(401).json(
+            {
+                success: false,
+                message: 'Invalid email or password'
+            });
+        }
+
+        const token = generateToken(user._id, user.role);
+
+        return res.status(200).json(
+        {
+            success: true,
+            message: 'Login successful',
+            data:
+            {
+                user:
+                {
+                    id: user._id,
+                    fullName: user.fullName,
+                    email: user.email,
+                    role: user.role
+                },
+                token
+            }
         });
     }
-    catch (error) {
+    catch(error)
+    {
         next(error);
     }
 };
