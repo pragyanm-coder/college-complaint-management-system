@@ -1,4 +1,7 @@
 
+import {
+    validateStaffStatus
+} from '../validators/complaintActionValidator.js';
 import express from 'express';
 
 import {
@@ -26,6 +29,7 @@ router.patch(
     '/complaints/:id/status',
     protect,
     authorize('staff'),
+    validateStaffStatus,
     updateStaffComplaintStatus
 );
 

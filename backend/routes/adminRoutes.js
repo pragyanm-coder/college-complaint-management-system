@@ -1,4 +1,8 @@
 
+import {
+    validateAssignment,
+    validateAdminStatus
+} from '../validators/complaintActionValidator.js';
 import express from 'express';
 
 import {
@@ -27,6 +31,7 @@ router.patch(
     '/complaints/:id/assign',
     protect,
     authorize('admin'),
+    validateAssignment,
     assignComplaint
 );
 
@@ -35,6 +40,7 @@ router.patch(
     '/complaints/:id/status',
     protect,
     authorize('admin'),
+    validateAdminStatus,
     updateComplaintStatus
 );
 

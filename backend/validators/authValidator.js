@@ -2,7 +2,26 @@
 const isValidEmail = (email) =>
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
+const isNonEmptyString = (value) =>
+    typeof value === 'string' && value.trim().length > 0;
+
+const validYears = [
+    '1st Year',
+    '2nd Year',
+    '3rd Year',
+    '4th Year'
+];
+
 export const validateRegister = (req, res, next) => {
+    const body = req.body;
+
+    if (!body || typeof body !== 'object' || Array.isArray(body)) {
+        return res.status(400).json({
+            success: false,
+            message: 'Invalid request body'
+        });
+    }
+
     const {
         fullName,
         email,
@@ -11,55 +30,60 @@ export const validateRegister = (req, res, next) => {
         department,
         year,
         phone
-    } = req.body;
+    } = body;
 
-    if (!fullName || fullName.trim().length < 3) {
+    if (!isNonEmptyString(fullName) || fullName.trim().length < 3 || fullName.trim().length > 100) {
         return res.status(400).json({
             success: false,
-            message: 'Full name must contain at least 3 characters'
+            message: 'Full name must contain 3 to 100 characters'
         });
     }
 
-    if (!email || !isValidEmail(email.trim())) {
+    if (!isNonEmptyString(email) || !isValidEmail(email.trim())) {
         return res.status(400).json({
             success: false,
             message: 'Please enter a valid email'
         });
     }
 
-    if (!rollNumber || !rollNumber.trim()) {
+    if (!isNonEmptyString(rollNumber) || rollNumber.trim().length > 30) {
         return res.status(400).json({
             success: false,
-            message: 'Roll number is required'
+            message: 'A valid roll number is required'
         });
     }
 
-    if (!department || !department.trim()) {
+    if (!isNonEmptyString(department)) {
         return res.status(400).json({
             success: false,
             message: 'Department is required'
         });
     }
 
-    if (!year) {
+    if (!validYears.includes(year)) {
         return res.status(400).json({
             success: false,
-            message: 'Year is required'
+            message: 'Please select a valid academic year'
         });
     }
 
-    if (!phone || !/^\d{10}$/.test(phone.trim())) {
+    if (!isNonEmptyString(phone) || !/^\d{10}$/.test(phone.trim())) {
         return res.status(400).json({
             success: false,
             message: 'Enter a valid 10-digit phone number'
         });
     }
 
-    if (!password || password.length < 8 ||
-        !/[A-Za-z]/.test(password) || !/\d/.test(password)) {
+    if (
+        typeof password !== 'string' ||
+        password.length < 8 ||
+        password.length > 128 ||
+        !/[A-Za-z]/.test(password) ||
+        !/\d/.test(password)
+    ) {
         return res.status(400).json({
             success: false,
-            message: 'Password must contain at least 8 characters, including letters and numbers'
+            message: 'Password must contain 8 to 128 characters, including letters and numbers'
         });
     }
 
@@ -67,9 +91,18 @@ export const validateRegister = (req, res, next) => {
 };
 
 export const validateLogin = (req, res, next) => {
-    const { email, password } = req.body;
+    const body = req.body;
 
-    if (!email || !password) {
+    if (!body || typeof body !== 'object' || Array.isArray(body)) {
+        return res.status(400).json({
+            success: false,
+            message: 'Invalid request body'
+        });
+    }
+
+    const { email, password } = body;
+
+    if (!isNonEmptyString(email) || typeof password !== 'string' || !password) {
         return res.status(400).json({
             success: false,
             message: 'Email and password are required'

@@ -35,32 +35,6 @@ router.get(
     getMyComplaints
 );
 
-// Admin: View all complaints
-router.get(
-    '/admin/all',
-    protect,
-    authorize('admin'),
-    (req, res) => {
-        res.json({
-            success: true,
-            message: 'All complaints endpoint working'
-        });
-    }
-);
-
-// Staff: View assigned complaints
-router.get(
-    '/staff/assigned',
-    protect,
-    authorize('staff'),
-    (req, res) => {
-        res.json({
-            success: true,
-            message: 'Assigned complaints endpoint working'
-        });
-    }
-);
-
 // View a particular complaint
 router.get(
     '/:id',

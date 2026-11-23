@@ -1,25 +1,73 @@
 
+const isNonEmptyString = (value) =>
+    typeof value === 'string' && value.trim().length > 0;
+
+const validCategories = [
+    'Hostel',
+    'Classroom and Infrastructure',
+    'Library',
+    'Canteen',
+    'Academics',
+    'Transport',
+    'IT and Wi-Fi',
+    'Other'
+];
+
 export const validateComplaint = (req, res, next) => {
-    const { title, description, category, location } = req.body;
+    const body = req.body;
 
-    if (!title || !description || !category || !location) {
+    if (!body || typeof body !== 'object' || Array.isArray(body)) {
         return res.status(400).json({
             success: false,
-            message: 'Title, description, category and location are required'
+            message: 'Invalid request body'
         });
     }
 
-    if (title.trim().length < 5) {
+    const { title, description, category, location } = body;
+
+    // Validate title
+    if (
+        !isNonEmptyString(title) ||
+        title.trim().length < 5 ||
+        title.trim().length > 120
+    ) {
         return res.status(400).json({
             success: false,
-            message: 'Title must contain at least 5 characters'
+            message: 'Title must contain 5 to 120 characters'
         });
     }
 
-    if (description.trim().length < 20) {
+    // Validate description
+    if (
+        !isNonEmptyString(description) ||
+        description.trim().length < 20 ||
+        description.trim().length > 2000
+    ) {
         return res.status(400).json({
             success: false,
-            message: 'Description must contain at least 20 characters'
+            message: 'Description must contain 20 to 2000 characters'
+        });
+    }
+
+    // Validate category
+    if (
+        !isNonEmptyString(category) ||
+        !validCategories.includes(category.trim())
+    ) {
+        return res.status(400).json({
+            success: false,
+            message: 'Please select a valid complaint category'
+        });
+    }
+
+    // Validate location
+    if (
+        !isNonEmptyString(location) ||
+        location.trim().length > 150
+    ) {
+        return res.status(400).json({
+            success: false,
+            message: 'Location is required and must not exceed 150 characters'
         });
     }
 
