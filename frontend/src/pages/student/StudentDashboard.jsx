@@ -1,3 +1,5 @@
+
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import EmptyState from '../../components/common/EmptyState'
 import Icon from '../../components/common/Icon'
@@ -12,16 +14,31 @@ import './StudentDashboard.css'
 
 function StudentDashboard() {
   const { user } = useAuth()
-  const { complaints } = useComplaints()
+  const { complaints, fetchMyComplaints } = useComplaints()
 
-  // Only this student's own complaints.
-  const mine = complaints.filter(
-    (complaint) => complaint.studentEmail.toLowerCase() === user.email.toLowerCase(),
-  )
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
-  const countByStatus = (status) => mine.filter((complaint) => complaint.status === status).length
+  useEffect(() => {
+    const loadComplaints = async () => {
+      try {
+        setError('')
+        await fetchMyComplaints()
+      } catch (err) {
+        setError(err.response?.data?.message || 'Unable to load your complaints.')
+      } finally {
+        setLoading(false)
+      }
+    }
 
-  // Staff marked these resolved, but the student has not confirmed yet.
+    loadComplaints()
+  }, [])
+
+  const mine = complaints
+
+  const countByStatus = (status) =>
+    mine.filter((complaint) => complaint.status === status).length
+
   const awaitingConfirmation = mine.filter(
     (complaint) => complaint.status === 'Resolved' && !complaint.studentConfirmed,
   )
@@ -32,91 +49,98 @@ function StudentDashboard() {
 
   return (
     <>
-      <PageHeader title={`Welcome, ${user.name}`} subtitle="Here is a summary of your complaints.">
+      <PageHeader
+        title={`Welcome, ${user?.fullName || user?.name || 'Student'}`}
+        subtitle="Here is a summary of your complaints."
+      >
         <Link to="/student/complaints/new" className="btn btn-primary">
           <Icon name="filePlus" size={18} />
           Register a Complaint
         </Link>
       </PageHeader>
 
-      <div className="alert alert-info">
-        Demo mode: these are sample complaints. They reset when you refresh the page.
-      </div>
+      {loading ? (
+        <div className="alert alert-info">Loading your complaints...</div>
+      ) : error ? (
+        <div className="alert alert-error" role="alert">{error}</div>
+      ) : (
+        <>
+          {awaitingConfirmation.length > 0 && (
+            <div className="alert alert-info" role="status">
+              <strong>{awaitingConfirmation.length}</strong> resolved{' '}
+              {awaitingConfirmation.length === 1 ? 'complaint is' : 'complaints are'} waiting for your
+              confirmation.{' '}
+              <Link to={`/student/complaints/${awaitingConfirmation[0].id}`}>
+                Review complaint
+              </Link>
+            </div>
+          )}
 
-      {awaitingConfirmation.length > 0 && (
-        <div className="alert alert-info" role="status">
-          <strong>{awaitingConfirmation.length}</strong> resolved{' '}
-          {awaitingConfirmation.length === 1 ? 'complaint is' : 'complaints are'} waiting for your
-          confirmation.{' '}
-          <Link to={`/student/complaints/${awaitingConfirmation[0].id}`}>
-            Review {awaitingConfirmation[0].id}
-          </Link>
-        </div>
-      )}
-
-      <div className="stat-grid">
-        <StatCard icon="inbox" label="Total complaints" value={mine.length} tone="blue" />
-        <StatCard icon="clock" label="Pending" value={countByStatus('Pending')} tone="amber" />
-        <StatCard icon="refresh" label="In progress" value={countByStatus('In Progress')} tone="indigo" />
-        <StatCard icon="checkCircle" label="Resolved" value={countByStatus('Resolved')} tone="green" />
-      </div>
-
-      <div className="dash-grid">
-        <section className="card" aria-labelledby="recent-heading">
-          <div className="section-head">
-            <h2 id="recent-heading">Recent complaints</h2>
-            {mine.length > 0 && <Link to="/student/complaints">View all</Link>}
+          <div className="stat-grid">
+            <StatCard icon="inbox" label="Total complaints" value={mine.length} tone="blue" />
+            <StatCard icon="clock" label="Pending" value={countByStatus('Pending')} tone="amber" />
+            <StatCard icon="refresh" label="In progress" value={countByStatus('In Progress')} tone="indigo" />
+            <StatCard icon="checkCircle" label="Resolved" value={countByStatus('Resolved')} tone="green" />
           </div>
 
-          {recent.length === 0 ? (
-            <EmptyState
-              title="No complaints yet"
-              text="When you register a complaint, it will appear here."
-            >
-              <Link to="/student/complaints/new" className="btn btn-primary">
-                Register your first complaint
-              </Link>
-            </EmptyState>
-          ) : (
-            <ul className="complaint-list">
-              {recent.map((complaint) => (
-                <li key={complaint.id} className="complaint-item">
-                  <Link to={`/student/complaints/${complaint.id}`}>
-                    <div>
-                      <p className="complaint-title">{complaint.title}</p>
-                      <p className="complaint-meta">
-                        {complaint.id} · {complaint.category} · {formatDate(complaint.submittedAt)}
-                      </p>
-                    </div>
-                    <div className="complaint-badges">
-                      <PriorityBadge priority={complaint.priority} />
-                      <StatusBadge status={complaint.status} />
-                    </div>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
+          <div className="dash-grid">
+            <section className="card" aria-labelledby="recent-heading">
+              <div className="section-head">
+                <h2 id="recent-heading">Recent complaints</h2>
+                {mine.length > 0 && <Link to="/student/complaints">View all</Link>}
+              </div>
 
-        <section className="card" aria-labelledby="quick-heading">
-          <h2 id="quick-heading" className="quick-heading">Quick links</h2>
-          <Link to="/student/complaints/new" className="quick-link">
-            <span className="stat-icon tone-blue"><Icon name="filePlus" /></span>
-            <span>
-              <strong>Register a Complaint</strong>
-              <small>Report a new problem</small>
-            </span>
-          </Link>
-          <Link to="/student/complaints" className="quick-link">
-            <span className="stat-icon tone-indigo"><Icon name="list" /></span>
-            <span>
-              <strong>My Complaints</strong>
-              <small>Track all your complaints</small>
-            </span>
-          </Link>
-        </section>
-      </div>
+              {recent.length === 0 ? (
+                <EmptyState
+                  title="No complaints yet"
+                  text="When you register a complaint, it will appear here."
+                >
+                  <Link to="/student/complaints/new" className="btn btn-primary">
+                    Register your first complaint
+                  </Link>
+                </EmptyState>
+              ) : (
+                <ul className="complaint-list">
+                  {recent.map((complaint) => (
+                    <li key={complaint.id} className="complaint-item">
+                      <Link to={`/student/complaints/${complaint.id}`}>
+                        <div>
+                          <p className="complaint-title">{complaint.title}</p>
+                          <p className="complaint-meta">
+                            {complaint.id} · {complaint.category} · {formatDate(complaint.submittedAt)}
+                          </p>
+                        </div>
+                        <div className="complaint-badges">
+                          <PriorityBadge priority={complaint.priority} />
+                          <StatusBadge status={complaint.status} />
+                        </div>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+
+            <section className="card" aria-labelledby="quick-heading">
+              <h2 id="quick-heading" className="quick-heading">Quick links</h2>
+              <Link to="/student/complaints/new" className="quick-link">
+                <span className="stat-icon tone-blue"><Icon name="filePlus" /></span>
+                <span>
+                  <strong>Register a Complaint</strong>
+                  <small>Report a new problem</small>
+                </span>
+              </Link>
+              <Link to="/student/complaints" className="quick-link">
+                <span className="stat-icon tone-indigo"><Icon name="list" /></span>
+                <span>
+                  <strong>My Complaints</strong>
+                  <small>Track all your complaints</small>
+                </span>
+              </Link>
+            </section>
+          </div>
+        </>
+      )}
     </>
   )
 }

@@ -1,6 +1,6 @@
+
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import AuthProvider from './context/AuthProvider'
-import DirectoryProvider from './context/DirectoryProvider'
 import ComplaintsProvider from './context/ComplaintsProvider'
 import PublicLayout from './components/layout/PublicLayout'
 import DashboardLayout from './components/layout/DashboardLayout'
@@ -27,49 +27,47 @@ import AdminReports from './pages/admin/AdminReports'
 function App() {
   return (
     <AuthProvider>
-      <DirectoryProvider>
-        <ComplaintsProvider>
-          <BrowserRouter>
-            <RouteTitle />
-            <Routes>
-              <Route element={<PublicLayout />}>
-                <Route path="/" element={<Home />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
-                <Route path="*" element={<NotFound />} />
-              </Route>
+      <ComplaintsProvider>
+        <BrowserRouter>
+          <RouteTitle />
+          <Routes>
+            <Route element={<PublicLayout />}>
+              <Route path="/" element={<Home />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="*" element={<NotFound />} />
+            </Route>
 
-              <Route element={<ProtectedRoute role="student" />}>
-                <Route element={<DashboardLayout />}>
-                  <Route path="/student/dashboard" element={<StudentDashboard />} />
-                  <Route path="/student/complaints/new" element={<RegisterComplaint />} />
-                  <Route path="/student/complaints" element={<MyComplaints />} />
-                  <Route path="/student/complaints/:id" element={<ComplaintDetails />} />
-                </Route>
+            <Route element={<ProtectedRoute role="student" />}>
+              <Route element={<DashboardLayout />}>
+                <Route path="/student/dashboard" element={<StudentDashboard />} />
+                <Route path="/student/complaints/new" element={<RegisterComplaint />} />
+                <Route path="/student/complaints" element={<MyComplaints />} />
+                <Route path="/student/complaints/:id" element={<ComplaintDetails />} />
               </Route>
+            </Route>
 
-              <Route element={<ProtectedRoute role="staff" />}>
-                <Route element={<DashboardLayout />}>
-                  <Route path="/staff/dashboard" element={<StaffDashboard />} />
-                  <Route path="/staff/complaints" element={<StaffComplaints />} />
-                  <Route path="/staff/complaints/:id" element={<StaffComplaintDetails />} />
-                </Route>
+            <Route element={<ProtectedRoute role="staff" />}>
+              <Route element={<DashboardLayout />}>
+                <Route path="/staff/dashboard" element={<StaffDashboard />} />
+                <Route path="/staff/complaints" element={<StaffComplaints />} />
+                <Route path="/staff/complaints/:id" element={<StaffComplaintDetails />} />
               </Route>
+            </Route>
 
-              <Route element={<ProtectedRoute role="admin" />}>
-                <Route element={<DashboardLayout />}>
-                  <Route path="/admin/dashboard" element={<AdminDashboard />} />
-                  <Route path="/admin/complaints" element={<AdminComplaints />} />
-                  <Route path="/admin/complaints/:id" element={<AdminComplaintDetails />} />
-                  <Route path="/admin/users" element={<AdminUsers />} />
-                  <Route path="/admin/departments" element={<AdminDepartments />} />
-                  <Route path="/admin/reports" element={<AdminReports />} />
-                </Route>
+            <Route element={<ProtectedRoute role="admin" />}>
+              <Route element={<DashboardLayout />}>
+                <Route path="/admin/dashboard" element={<AdminDashboard />} />
+                <Route path="/admin/complaints" element={<AdminComplaints />} />
+                <Route path="/admin/complaints/:id" element={<AdminComplaintDetails />} />
+                <Route path="/admin/users" element={<AdminUsers />} />
+                <Route path="/admin/departments" element={<AdminDepartments />} />
+                <Route path="/admin/reports" element={<AdminReports />} />
               </Route>
-            </Routes>
-          </BrowserRouter>
-        </ComplaintsProvider>
-      </DirectoryProvider>
+            </Route>
+          </Routes>
+        </BrowserRouter>
+      </ComplaintsProvider>
     </AuthProvider>
   )
 }

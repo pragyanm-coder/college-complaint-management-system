@@ -1,8 +1,8 @@
+
 import { useState } from 'react'
 import ComplaintListItem from './ComplaintListItem'
 import EmptyState from './EmptyState'
 import FormField from './FormField'
-import { useDirectory } from '../../context/useDirectory'
 import { complaintCategories, complaintStatuses, priorities } from '../../data/options'
 import { emptyFilters, filterComplaints } from '../../utils/complaintUtils'
 import './ComplaintBrowser.css'
@@ -18,15 +18,14 @@ function ComplaintBrowser({
   emptyText = '',
 }) {
   const [filters, setFilters] = useState(initialFilters ?? emptyFilters)
-  const { departments } = useDirectory()
 
-  if (complaints.length === 0) {
-    return (
-      <div className="card">
-        <EmptyState title={emptyTitle} text={emptyText} />
-      </div>
-    )
-  }
+  const departments = [
+    ...new Set(
+      complaints
+        .map((item) => item.department || item.assignedStaff?.handlingDepartment)
+        .filter(Boolean)
+    ),
+  ].sort()
 
   const visible = filterComplaints(complaints, filters)
   const filtersActive = Object.values(filters).some(Boolean)
@@ -34,6 +33,14 @@ function ComplaintBrowser({
   const handleChange = (event) => {
     const { name, value } = event.target
     setFilters({ ...filters, [name]: value })
+  }
+
+  if (complaints.length === 0) {
+    return (
+      <div className="card">
+        <EmptyState title={emptyTitle} text={emptyText} />
+      </div>
+    )
   }
 
   return (
@@ -48,6 +55,7 @@ function ComplaintBrowser({
             onChange={handleChange}
             placeholder="Title, ID, student or location"
           />
+
           <FormField
             label="Status"
             name="status"
@@ -57,6 +65,7 @@ function ComplaintBrowser({
             value={filters.status}
             onChange={handleChange}
           />
+
           <FormField
             label="Priority"
             name="priority"
@@ -66,6 +75,7 @@ function ComplaintBrowser({
             value={filters.priority}
             onChange={handleChange}
           />
+
           <FormField
             label="Category"
             name="category"
@@ -75,6 +85,7 @@ function ComplaintBrowser({
             value={filters.category}
             onChange={handleChange}
           />
+
           {adminFilters && (
             <>
               <FormField
@@ -86,6 +97,7 @@ function ComplaintBrowser({
                 value={filters.assignment}
                 onChange={handleChange}
               />
+
               <FormField
                 label="Department"
                 name="department"
@@ -97,18 +109,38 @@ function ComplaintBrowser({
               />
             </>
           )}
-          <FormField label="From date" name="from" type="date" value={filters.from} onChange={handleChange} />
-          <FormField label="To date" name="to" type="date" value={filters.to} onChange={handleChange} />
+
+          <FormField
+            label="From date"
+            name="from"
+            type="date"
+            value={filters.from}
+            onChange={handleChange}
+          />
+
+          <FormField
+            label="To date"
+            name="to"
+            type="date"
+            value={filters.to}
+            onChange={handleChange}
+          />
         </div>
       </section>
 
       <section className="card" aria-label="Complaint list">
         <div className="browser-results-bar">
           <p>
-            Showing <strong>{visible.length}</strong> of <strong>{complaints.length}</strong> complaints
+            Showing <strong>{visible.length}</strong> of{' '}
+            <strong>{complaints.length}</strong> complaints
           </p>
+
           {filtersActive && (
-            <button type="button" className="btn btn-outline btn-sm" onClick={() => setFilters(emptyFilters)}>
+            <button
+              type="button"
+              className="btn btn-outline btn-sm"
+              onClick={() => setFilters(emptyFilters)}
+            >
               Clear filters
             </button>
           )}

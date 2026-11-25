@@ -1,3 +1,5 @@
+
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import BarChart from '../../components/common/BarChart'
 import ComplaintListItem from '../../components/common/ComplaintListItem'
@@ -12,9 +14,28 @@ import './AdminDashboard.css'
 
 function AdminDashboard() {
   const { user } = useAuth()
-  const { complaints } = useComplaints()
+  const { complaints, fetchAllComplaints } = useComplaints()
 
-  const countByStatus = (status) => complaints.filter((item) => item.status === status).length
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    const loadComplaints = async () => {
+      try {
+        setError('')
+        await fetchAllComplaints()
+      } catch (err) {
+        setError(err.response?.data?.message || 'Unable to load complaints.')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadComplaints()
+  }, [])
+
+  const countByStatus = (status) =>
+    complaints.filter((item) => item.status === status).length
 
   const unassigned = complaints.filter((item) => !item.assignedStaff)
   const urgentUnassigned = unassigned.filter((item) => item.priority === 'Urgent').length
@@ -27,57 +48,70 @@ function AdminDashboard() {
 
   return (
     <>
-      <PageHeader title={`Welcome, ${user.name}`} subtitle="Overview of all complaints in the college." />
+      <PageHeader
+        title={`Welcome, ${user?.fullName || user?.name || 'Admin'}`}
+        subtitle="Overview of all complaints in the college."
+      />
 
-      {unassigned.length > 0 && (
-        <div className="alert alert-info" role="status">
-          <strong>{unassigned.length}</strong>{' '}
-          {unassigned.length === 1 ? 'complaint is' : 'complaints are'} waiting to be assigned
-          {urgentUnassigned > 0 && ` (${urgentUnassigned} urgent)`}.{' '}
-          <Link to="/admin/complaints?assignment=Unassigned">View them</Link>
-        </div>
-      )}
+      {loading ? (
+        <div className="alert alert-info">Loading dashboard...</div>
+      ) : error ? (
+        <div className="alert alert-error" role="alert">{error}</div>
+      ) : (
+        <>
+          {unassigned.length > 0 && (
+            <div className="alert alert-info" role="status">
+              <strong>{unassigned.length}</strong>{' '}
+              {unassigned.length === 1 ? 'complaint is' : 'complaints are'} waiting to be assigned
+              {urgentUnassigned > 0 && ` (${urgentUnassigned} urgent)`}.{' '}
+              <Link to="/admin/complaints?assignment=Unassigned">View them</Link>
+            </div>
+          )}
 
-      <div className="stat-grid">
-        <StatCard icon="inbox" label="Total complaints" value={complaints.length} tone="blue" />
-        <StatCard icon="clock" label="Pending" value={countByStatus('Pending')} tone="amber" />
-        <StatCard icon="refresh" label="In progress" value={countByStatus('In Progress')} tone="indigo" />
-        <StatCard icon="checkCircle" label="Resolved" value={countByStatus('Resolved')} tone="green" />
-      </div>
-
-      <div className="admin-grid">
-        <section className="card" aria-labelledby="waiting-heading">
-          <div className="section-head">
-            <h2 id="waiting-heading">Waiting for assignment</h2>
-            {unassigned.length > 0 && <Link to="/admin/complaints?assignment=Unassigned">View all</Link>}
+          <div className="stat-grid">
+            <StatCard icon="inbox" label="Total complaints" value={complaints.length} tone="blue" />
+            <StatCard icon="clock" label="Pending" value={countByStatus('Pending')} tone="amber" />
+            <StatCard icon="refresh" label="In progress" value={countByStatus('In Progress')} tone="indigo" />
+            <StatCard icon="checkCircle" label="Resolved" value={countByStatus('Resolved')} tone="green" />
           </div>
 
-          {waiting.length === 0 ? (
-            <EmptyState
-              icon="checkCircle"
-              title="Everything is assigned"
-              text="Every complaint has a department and a staff member."
-            />
-          ) : (
-            <ul className="complaint-list">
-              {waiting.map((item) => (
-                <ComplaintListItem
-                  key={item.id}
-                  complaint={item}
-                  to={`/admin/complaints/${item.id}`}
-                  showStudent
-                  showAssignment={false}
-                />
-              ))}
-            </ul>
-          )}
-        </section>
+          <div className="admin-grid">
+            <section className="card" aria-labelledby="waiting-heading">
+              <div className="section-head">
+                <h2 id="waiting-heading">Waiting for assignment</h2>
+                {unassigned.length > 0 && (
+                  <Link to="/admin/complaints?assignment=Unassigned">View all</Link>
+                )}
+              </div>
 
-        <section className="card" aria-labelledby="category-heading">
-          <h2 id="category-heading" className="chart-heading">Complaints by category</h2>
-          <BarChart items={categoryItems} />
-        </section>
-      </div>
+              {waiting.length === 0 ? (
+                <EmptyState
+                  icon="checkCircle"
+                  title="Everything is assigned"
+                  text="Every complaint has a department and a staff member."
+                />
+              ) : (
+                <ul className="complaint-list">
+                  {waiting.map((item) => (
+                    <ComplaintListItem
+                      key={item.id}
+                      complaint={item}
+                      to={`/admin/complaints/${item.id}`}
+                      showStudent
+                      showAssignment={false}
+                    />
+                  ))}
+                </ul>
+              )}
+            </section>
+
+            <section className="card" aria-labelledby="category-heading">
+              <h2 id="category-heading" className="chart-heading">Complaints by category</h2>
+              <BarChart items={categoryItems} />
+            </section>
+          </div>
+        </>
+      )}
     </>
   )
 }

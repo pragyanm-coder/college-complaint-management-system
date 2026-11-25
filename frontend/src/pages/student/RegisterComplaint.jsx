@@ -1,10 +1,10 @@
+
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import FormField from '../../components/common/FormField'
 import Icon from '../../components/common/Icon'
 import PageHeader from '../../components/common/PageHeader'
-import { useAuth } from '../../context/useAuth'
-import { useComplaints } from '../../context/useComplaints'
+import api from '../../api/axios'
 import { complaintCategories, priorities } from '../../data/options'
 import './RegisterComplaint.css'
 
@@ -35,32 +35,61 @@ function validate(form) {
 }
 
 function RegisterComplaint() {
-  const { user } = useAuth()
-  const { addComplaint } = useComplaints()
   const [form, setForm] = useState(initialForm)
   const [errors, setErrors] = useState({})
   const [submitted, setSubmitted] = useState(null)
+  const [loading, setLoading] = useState(false)
+  const [apiError, setApiError] = useState('')
 
   const handleChange = (event) => {
     const { name, value } = event.target
     setForm({ ...form, [name]: value })
     setErrors({ ...errors, [name]: '' })
+    setApiError('')
   }
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault()
+
     const found = validate(form)
     setErrors(found)
+
     if (Object.keys(found).length > 0) return
 
-    setSubmitted(addComplaint(form, user))
-    window.scrollTo(0, 0)
+    try {
+      setLoading(true)
+      setApiError('')
+
+      const response = await api.post('/api/complaints', {
+        title: form.title.trim(),
+        category: form.category,
+        priority: form.priority,
+        location: form.location.trim(),
+        description: form.description.trim(),
+      })
+
+      const complaint = response.data.data
+
+      setSubmitted({
+        ...complaint,
+        id: complaint._id,
+      })
+
+      window.scrollTo(0, 0)
+    } catch (error) {
+      setApiError(
+        error.response?.data?.message || 'Unable to submit complaint. Please try again.'
+      )
+    } finally {
+      setLoading(false)
+    }
   }
 
   const startAnother = () => {
     setForm(initialForm)
     setErrors({})
     setSubmitted(null)
+    setApiError('')
   }
 
   if (submitted) {
@@ -147,8 +176,12 @@ function RegisterComplaint() {
           hint={`${form.description.length}/1000 characters. Explain what happened and since when.`}
         />
 
+        {apiError && <p className="form-error">{apiError}</p>}
+
         <div className="form-actions">
-          <button type="submit" className="btn btn-primary">Submit Complaint</button>
+          <button type="submit" className="btn btn-primary" disabled={loading}>
+            {loading ? 'Submitting...' : 'Submit Complaint'}
+          </button>
           <Link to="/student/dashboard" className="btn btn-outline">Cancel</Link>
         </div>
       </form>

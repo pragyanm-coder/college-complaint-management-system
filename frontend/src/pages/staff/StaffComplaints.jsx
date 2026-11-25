@@ -1,16 +1,59 @@
+
+import { useEffect, useState } from 'react'
+import api from '../../api/axios'
 import ComplaintBrowser from '../../components/common/ComplaintBrowser'
 import PageHeader from '../../components/common/PageHeader'
-import { useAuth } from '../../context/useAuth'
-import { useComplaints } from '../../context/useComplaints'
-import { isAssignedTo } from '../../utils/complaintUtils'
 
 function StaffComplaints() {
-  const { user } = useAuth()
-  const { complaints } = useComplaints()
+  const [complaints, setComplaints] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
-  const mine = complaints
-    .filter((item) => isAssignedTo(item, user))
-    .sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt))
+  useEffect(() => {
+    const fetchAssignedComplaints = async () => {
+      try {
+        setLoading(true)
+        setError('')
+
+        const response = await api.get('/api/staff/complaints')
+
+        const assignedComplaints = response.data.data.map((complaint) => ({
+          ...complaint,
+          id: complaint._id,
+          submittedAt: complaint.createdAt,
+          studentName: complaint.student?.fullName || '',
+          studentEmail: complaint.student?.email || '',
+          studentRollNumber: complaint.student?.rollNumber || '',
+          department: complaint.assignedStaff?.handlingDepartment || '',
+          assignedStaff: complaint.assignedStaff?.fullName || '',
+          updates: complaint.updates || [],
+        }))
+
+        setComplaints(assignedComplaints)
+      } catch (err) {
+        setError(
+          err.response?.data?.message ||
+          'Unable to load assigned complaints.'
+        )
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchAssignedComplaints()
+  }, [])
+
+  if (loading) {
+    return <p>Loading assigned complaints...</p>
+  }
+
+  if (error) {
+    return <p>{error}</p>
+  }
+
+  const mine = [...complaints].sort(
+    (a, b) => new Date(b.submittedAt) - new Date(a.submittedAt)
+  )
 
   return (
     <>
@@ -18,6 +61,7 @@ function StaffComplaints() {
         title="Assigned Complaints"
         subtitle="Search and filter the complaints assigned to you."
       />
+
       <ComplaintBrowser
         complaints={mine}
         linkBase="/staff/complaints"

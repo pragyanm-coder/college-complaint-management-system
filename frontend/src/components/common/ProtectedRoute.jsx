@@ -1,6 +1,6 @@
 import { Navigate, Outlet } from 'react-router-dom'
 import { useAuth } from '../../context/useAuth'
-import { roleHome } from '../../data/demoUsers'
+import { roleHome } from '../../data/roleHome'
 
 function ProtectedRoute({ role }) {
   const { user } = useAuth()

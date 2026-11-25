@@ -1,139 +1,71 @@
+
 import { useState } from 'react'
 import { ComplaintsContext } from './ComplaintsContext'
-import { sampleComplaints } from '../data/sampleComplaints'
+import api from '../api/axios'
+
+function formatComplaint(complaint) {
+  return {
+    ...complaint,
+    id: complaint._id,
+    submittedAt: complaint.createdAt,
+    studentName: complaint.student?.fullName || '',
+    studentEmail: complaint.student?.email || '',
+    studentRollNumber: complaint.student?.rollNumber || '',
+    department: complaint.assignedStaff?.handlingDepartment || '',
+    assignedStaff: complaint.assignedStaff?.fullName || '',
+    updates: (complaint.updates || []).map((item) => ({
+      ...item,
+      type: item.type === 'Comment' ? 'remark' : 'status',
+      author: typeof item.author === 'object'
+        ? item.author?.fullName || 'System'
+        : item.author || 'System',
+    })),
+  }
+}
 
 function ComplaintsProvider({ children }) {
-  // Demo: complaints live in memory only, so they reset when you refresh the page.
-  const [complaints, setComplaints] = useState(sampleComplaints)
+  const [complaints, setComplaints] = useState([])
 
-  // Changes one complaint and leaves all the others untouched.
-  const updateComplaint = (id, change) => {
-    setComplaints((current) => current.map((item) => (item.id === id ? change(item) : item)))
+  // Fetch complaints submitted by the logged-in student.
+  const fetchMyComplaints = async () => {
+    const response = await api.get('/api/complaints/my')
+    const myComplaints = response.data.data.map(formatComplaint)
+
+    setComplaints(myComplaints)
+    return myComplaints
   }
 
-  // Creates a new complaint for the logged-in student and puts it at the top of the list.
-  const addComplaint = (data, user) => {
-    const numbers = complaints.map((item) => Number(item.id.replace('CMP-', '')))
-    const nextNumber = Math.max(1000, ...numbers) + 1
-    const now = new Date().toISOString()
+  // Fetch all complaints for the admin.
+  const fetchAllComplaints = async () => {
+    const response = await api.get('/api/admin/complaints')
+    const allComplaints = response.data.data.map(formatComplaint)
 
-    const newComplaint = {
-      id: `CMP-${nextNumber}`,
-      title: data.title.trim(),
-      category: data.category,
-      description: data.description.trim(),
-      location: data.location.trim(),
-      priority: data.priority,
-      status: 'Pending',
-      submittedAt: now,
-      studentName: user.name,
-      studentEmail: user.email,
-      department: '',
-      assignedStaff: '',
-      updates: [{ type: 'status', date: now, author: user.name, text: 'Complaint submitted' }],
-      resolvedAt: null,
-      studentConfirmed: false,
-      rating: null,
-      feedback: '',
-    }
-
-    setComplaints([newComplaint, ...complaints])
-    return newComplaint
+    setComplaints(allComplaints)
+    return allComplaints
   }
 
-  // The student says the issue is really fixed, and leaves a rating and feedback.
-  const confirmResolution = (id, { rating, feedback }, user) => {
-    const now = new Date().toISOString()
-    updateComplaint(id, (item) => ({
-      ...item,
-      studentConfirmed: true,
-      rating,
-      feedback: feedback.trim(),
-      updates: [
-        ...item.updates,
-        { type: 'status', date: now, author: user.name, text: 'Student confirmed the complaint is resolved' },
-      ],
-    }))
+  // These actions will be connected when their backend endpoints are available.
+  const confirmResolution = async () => {
+    throw new Error('Student resolution confirmation is not supported by the backend yet.')
   }
 
-  // The student says the issue is NOT fixed, so the complaint goes back to In Progress.
-  const reopenComplaint = (id, reason, user) => {
-    const now = new Date().toISOString()
-    updateComplaint(id, (item) => ({
-      ...item,
-      status: 'In Progress',
-      resolvedAt: null,
-      studentConfirmed: false,
-      updates: [
-        ...item.updates,
-        { type: 'status', date: now, author: user.name, text: 'Student reported the issue is not resolved' },
-        { type: 'remark', date: now, author: user.name, text: reason.trim() },
-      ],
-    }))
+  const reopenComplaint = async () => {
+    throw new Error('Reopening a complaint is not supported by the backend yet.')
   }
 
-  // Staff: change the status, and optionally add a remark at the same time.
-  const updateStatus = (id, status, remark, user) => {
-    const now = new Date().toISOString()
-    updateComplaint(id, (item) => {
-      const entries = [
-        {
-          type: 'status',
-          date: now,
-          author: user.name,
-          text: status === 'Resolved' ? 'Marked as resolved' : `Status changed to ${status}`,
-        },
-      ]
-      if (remark.trim()) {
-        entries.push({ type: 'remark', date: now, author: user.name, text: remark.trim() })
-      }
-      return {
-        ...item,
-        status,
-        resolvedAt: status === 'Resolved' ? now : null,
-        studentConfirmed: false,
-        updates: [...item.updates, ...entries],
-      }
-    })
-  }
-
-  // Staff: add a remark without changing the status.
-  const addRemark = (id, text, user) => {
-    const now = new Date().toISOString()
-    updateComplaint(id, (item) => ({
-      ...item,
-      updates: [...item.updates, { type: 'remark', date: now, author: user.name, text: text.trim() }],
-    }))
-  }
-
-  // Admin: assign (or reassign) a complaint to a department and a staff member.
-  const assignComplaint = (id, { department, staff }, user) => {
-    const now = new Date().toISOString()
-    updateComplaint(id, (item) => ({
-      ...item,
-      department,
-      assignedStaff: staff,
-      updates: [
-        ...item.updates,
-        {
-          type: 'status',
-          date: now,
-          author: user.name,
-          text: `${item.assignedStaff ? 'Reassigned' : 'Assigned'} to ${department} (${staff})`,
-        },
-      ],
-    }))
+  const assignComplaint = async () => {
+    throw new Error('Staff assignment requires a staff ID and the staff directory integration.')
   }
 
   return (
     <ComplaintsContext.Provider
       value={{
         complaints,
-        addComplaint,
+        setComplaints,
+        fetchMyComplaints,
+        fetchAllComplaints,
         confirmResolution,
         reopenComplaint,
-        updateStatus,
-        addRemark,
         assignComplaint,
       }}
     >

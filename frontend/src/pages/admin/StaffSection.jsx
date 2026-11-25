@@ -1,148 +1,120 @@
-import { useState } from 'react'
-import Icon from '../../components/common/Icon'
+
+import { useEffect, useState } from 'react'
 import { useComplaints } from '../../context/useComplaints'
-import { useDirectory } from '../../context/useDirectory'
-import StaffForm from './StaffForm'
 import './AdminManage.css'
 
 function StaffSection() {
-  const { staff, setStaffActive } = useDirectory()
-  const { complaints } = useComplaints()
-  const [editing, setEditing] = useState(null) // null, 'new', or the email of the staff member being edited
-  const [message, setMessage] = useState(null) // { type: 'success' | 'error', text }
+  const { complaints, fetchAllComplaints } = useComplaints()
 
-  // Complaints this person still has to work on.
-  const activeCount = (member) =>
-    complaints.filter((item) => item.assignedStaff === member.name && item.status !== 'Resolved').length
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
-  const handleToggle = (member) => {
-    if (member.active) {
-      const open = activeCount(member)
-      if (open > 0) {
-        setMessage({
-          type: 'error',
-          text: `${member.name} still has ${open} active ${open === 1 ? 'complaint' : 'complaints'}. Reassign ${open === 1 ? 'it' : 'them'} first, then deactivate.`,
-        })
-        return
+  useEffect(() => {
+    const loadComplaints = async () => {
+      try {
+        setError('')
+        await fetchAllComplaints()
+      } catch (err) {
+        setError(err.response?.data?.message || 'Unable to load staff information.')
+      } finally {
+        setLoading(false)
       }
-      setStaffActive(member.email, false)
-      setMessage({ type: 'success', text: `${member.name} has been deactivated and can no longer be assigned complaints.` })
-    } else {
-      setStaffActive(member.email, true)
-      setMessage({ type: 'success', text: `${member.name} has been activated.` })
     }
-  }
 
-  const handleSaved = (text) => {
-    setEditing(null)
-    setMessage({ type: 'success', text })
-  }
+    loadComplaints()
+  }, [])
 
-  const editingMember = staff.find((member) => member.email === editing)
+  const staffMap = new Map()
+
+  complaints.forEach((complaint) => {
+    if (!complaint.assignedStaff) return
+
+    const name = complaint.assignedStaff
+
+    if (!staffMap.has(name)) {
+      staffMap.set(name, {
+        name,
+        departments: new Set(),
+        activeComplaints: 0,
+        totalComplaints: 0,
+      })
+    }
+
+    const member = staffMap.get(name)
+
+    if (complaint.department) {
+      member.departments.add(complaint.department)
+    }
+
+    member.totalComplaints += 1
+
+    if (complaint.status !== 'Resolved') {
+      member.activeComplaints += 1
+    }
+  })
+
+  const staff = [...staffMap.values()]
 
   return (
-    <>
-      {message && (
-        <div
-          className={`alert ${message.type === 'error' ? 'alert-error' : 'alert-info'}`}
-          role={message.type === 'error' ? 'alert' : 'status'}
-        >
-          {message.text}
-        </div>
-      )}
+    <section className="card" aria-label="Staff">
+      <div className="manage-toolbar">
+        <p>
+          <strong>{staff.length}</strong> staff members found in complaint assignments
+        </p>
+      </div>
 
-      {editing !== null && (
-        <StaffForm
-          key={editing}
-          member={editingMember ?? null}
-          onSaved={handleSaved}
-          onCancel={() => setEditing(null)}
-        />
-      )}
-
-      <section className="card" aria-label="Staff">
-        <div className="manage-toolbar">
-          <p>
-            <strong>{staff.length}</strong> staff members
-          </p>
-          {editing === null && (
-            <button
-              type="button"
-              className="btn btn-primary btn-sm"
-              onClick={() => {
-                setMessage(null)
-                setEditing('new')
-              }}
-            >
-              <Icon name="plus" size={16} />
-              Add staff member
-            </button>
-          )}
-        </div>
-
+      {loading ? (
+        <div className="alert alert-info">Loading staff information...</div>
+      ) : error ? (
+        <div className="alert alert-error" role="alert">{error}</div>
+      ) : staff.length === 0 ? (
+        <p className="muted-note">
+          No staff members have been assigned complaints yet.
+        </p>
+      ) : (
         <div className="table-wrap">
           <table className="data-table">
             <thead>
               <tr>
                 <th scope="col">Staff member</th>
-                <th scope="col">Departments</th>
+                <th scope="col">Department</th>
                 <th scope="col">Active complaints</th>
-                <th scope="col">Status</th>
-                <th scope="col">Actions</th>
+                <th scope="col">Total assigned</th>
               </tr>
             </thead>
+
             <tbody>
               {staff.map((member) => (
-                <tr key={member.email}>
+                <tr key={member.name}>
                   <td>
                     <span className="cell-main">{member.name}</span>
-                    <span className="cell-sub">{member.email}</span>
                   </td>
+
                   <td>
                     <div className="chip-list">
-                      {member.departments.map((name) => (
-                        <span key={name} className="chip">{name}</span>
+                      {[...member.departments].map((department) => (
+                        <span key={department} className="chip">
+                          {department}
+                        </span>
                       ))}
+                      {member.departments.size === 0 && 'Not specified'}
                     </div>
                   </td>
-                  <td>{activeCount(member)}</td>
-                  <td>
-                    <span className={`badge ${member.active ? 'badge-resolved' : 'badge-low'}`}>
-                      {member.active ? 'Active' : 'Deactivated'}
-                    </span>
-                  </td>
-                  <td>
-                    <div className="row-actions">
-                      <button
-                        type="button"
-                        className="btn btn-outline btn-sm"
-                        onClick={() => {
-                          setMessage(null)
-                          setEditing(member.email)
-                        }}
-                      >
-                        Edit departments
-                      </button>
-                      <button
-                        type="button"
-                        className={`btn btn-outline btn-sm ${member.active ? 'btn-danger' : ''}`}
-                        onClick={() => handleToggle(member)}
-                      >
-                        {member.active ? 'Deactivate' : 'Activate'}
-                      </button>
-                    </div>
-                  </td>
+
+                  <td>{member.activeComplaints}</td>
+                  <td>{member.totalComplaints}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
+      )}
 
-        <p className="muted-note">
-          Deactivated staff do not appear when assigning complaints and cannot log in.
-        </p>
-      </section>
-    </>
+      <p className="muted-note">
+        This overview includes staff members found in existing complaint assignments.
+        Staff account management is not available through the current backend APIs.
+      </p>
+    </section>
   )
 }
 

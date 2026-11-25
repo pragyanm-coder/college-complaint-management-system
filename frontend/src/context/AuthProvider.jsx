@@ -1,52 +1,99 @@
-import { useState } from 'react'
-import { AuthContext } from './AuthContext'
-import { demoUsers } from '../data/demoUsers'
 
-const STORAGE_KEY = 'ccrs_demo_user'
+import { useState } from 'react';
+import { AuthContext } from './AuthContext';
+import api from '../api/axios';
+
+const USER_KEY = 'ccrs_user';
+const TOKEN_KEY = 'ccrs_token';
 
 function loadSavedUser() {
-  try {
-    const saved = sessionStorage.getItem(STORAGE_KEY)
-    return saved ? JSON.parse(saved) : null
-  } catch {
-    return null
-  }
+    try {
+        const saved = localStorage.getItem(USER_KEY);
+        return saved ? JSON.parse(saved) : null;
+    } catch {
+        return null;
+    }
 }
 
 function AuthProvider({ children }) {
-  const [user, setUser] = useState(loadSavedUser)
+    const [user, setUser] = useState(loadSavedUser);
 
-  const saveUser = (newUser) => {
-    setUser(newUser)
-    try {
-      if (newUser) sessionStorage.setItem(STORAGE_KEY, JSON.stringify(newUser))
-      else sessionStorage.removeItem(STORAGE_KEY)
-    } catch {
-      // Storage not available: the user simply stays logged in until refresh.
-    }
-  }
+    const saveAuth = (newUser, token) => {
+        setUser(newUser);
 
-  const login = (email, password) => {
-    const match = demoUsers.find(
-      (item) => item.email.toLowerCase() === email.toLowerCase() && item.password === password,
-    )
-    if (!match) return { ok: false, message: 'Incorrect email or password.' }
-    saveUser({ name: match.name, email: match.email, role: match.role })
-    return { ok: true }
-  }
+        if (newUser && token) {
+            localStorage.setItem(USER_KEY, JSON.stringify(newUser));
+            localStorage.setItem(TOKEN_KEY, token);
+        } else {
+            localStorage.removeItem(USER_KEY);
+            localStorage.removeItem(TOKEN_KEY);
+        }
+    };
 
-  // Demo: a new student is logged in straight away. Nothing is stored permanently.
-  const registerStudent = (details) => {
-    saveUser({ name: details.fullName.trim(), email: details.email.trim(), role: 'student' })
-  }
+    const login = async (email, password) => {
+        try {
+            const response = await api.post('/api/auth/login', {
+                email,
+                password,
+            });
 
-  const logout = () => saveUser(null)
+            const { user, token } = response.data.data;
 
-  return (
-    <AuthContext.Provider value={{ user, login, registerStudent, logout }}>
-      {children}
-    </AuthContext.Provider>
-  )
+            saveAuth({
+                id: user.id,
+                name: user.fullName,
+                fullName: user.fullName,
+                email: user.email,
+                role: user.role,
+            }, token);
+
+            return { ok: true };
+        } catch (error) {
+            return {
+                ok: false,
+                message: error.response?.data?.message || error.message || 'Login failed.',
+            };
+        }
+    };
+
+    const registerStudent = async (details) => {
+        try {
+            const response = await api.post('/api/auth/register', {
+                fullName: details.fullName,
+                email: details.email,
+                password: details.password,
+                rollNumber: details.rollNumber,
+                department: details.department,
+                year: details.year,
+                phone: details.phone,
+            });
+
+            const { user, token } = response.data.data;
+
+            saveAuth({
+                id: user.id,
+                name: user.fullName,
+                fullName: user.fullName,
+                email: user.email,
+                role: user.role,
+            }, token);
+
+            return { ok: true };
+        } catch (error) {
+            return {
+                ok: false,
+                message: error.response?.data?.message || error.message || 'Registration failed.',
+            };
+        }
+    };
+
+    const logout = () => saveAuth(null, null);
+
+    return (
+        <AuthContext.Provider value={{ user, login, registerStudent, logout }}>
+            {children}
+        </AuthContext.Provider>
+    );
 }
 
-export default AuthProvider
+export default AuthProvider;

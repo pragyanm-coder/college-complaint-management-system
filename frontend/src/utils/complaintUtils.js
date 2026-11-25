@@ -1,3 +1,4 @@
+
 import { toDateInputValue } from './formatters'
 
 export const emptyFilters = {
@@ -9,12 +10,6 @@ export const emptyFilters = {
   assignment: '',
   from: '',
   to: '',
-}
-
-// Demo: a complaint belongs to a staff member when the names match.
-// The real backend will compare staff IDs instead.
-export function isAssignedTo(complaint, user) {
-  return complaint.assignedStaff === user.name
 }
 
 export const priorityRank = { Urgent: 0, High: 1, Medium: 2, Low: 3 }

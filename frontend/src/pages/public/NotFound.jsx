@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/useAuth'
-import { roleHome } from '../../data/demoUsers'
+import { roleHome } from '../../data/roleHome'
 
 function NotFound() {
   const { user } = useAuth()

@@ -2,8 +2,7 @@ import { useState } from 'react'
 import { Link, Navigate } from 'react-router-dom'
 import FormField from '../../components/common/FormField'
 import { useAuth } from '../../context/useAuth'
-import { useDirectory } from '../../context/useDirectory'
-import { roleHome } from '../../data/demoUsers'
+import { roleHome } from '../../data/roleHome'
 import { departments, years } from '../../data/options'
 import { emailPattern } from '../../utils/validators'
 import './Auth.css'
@@ -39,9 +38,10 @@ function validate(form) {
 
 function Register() {
   const { user, registerStudent } = useAuth()
-  const { addStudent, emailInUse } = useDirectory()
   const [form, setForm] = useState(initialForm)
   const [errors, setErrors] = useState({})
+  const [loading, setLoading] = useState(false)
+  const [formError, setFormError] = useState('')
 
   if (user) return <Navigate to={roleHome[user.role]} replace />
 
@@ -51,18 +51,25 @@ function Register() {
     setErrors({ ...errors, [name]: '' })
   }
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault()
+
     const found = validate(form)
-    if (!found.email && emailInUse(form.email)) {
-      found.email = 'An account with this email already exists. Try logging in instead.'
-    }
     setErrors(found)
+
     if (Object.keys(found).length > 0) return
 
-    addStudent(form)
-    registerStudent(form)
-  }
+    setLoading(true)
+    setFormError('')
+
+    const result = await registerStudent(form)
+
+    if (!result.ok) {
+        setFormError(result.message)
+    }
+
+    setLoading(false)
+}
 
   return (
     <section className="auth-page">
@@ -71,10 +78,11 @@ function Register() {
           <h1>Create your student account</h1>
           <p className="auth-subtitle">Fill in your details to start registering complaints.</p>
 
-          <div className="alert alert-info">
-            Demo mode: your account is not saved anywhere yet. It will be stored
-            properly once the backend is connected.
-          </div>
+          {formError && (
+    <div className="alert alert-error" role="alert">
+        {formError}
+    </div>
+)}
 
           <form onSubmit={handleSubmit} noValidate>
             <div className="form-grid">
@@ -87,7 +95,9 @@ function Register() {
               <FormField label="Password" name="password" type="password" value={form.password} onChange={handleChange} error={errors.password} hint="At least 8 characters, with letters and numbers" autoComplete="new-password" />
               <FormField label="Confirm password" name="confirmPassword" type="password" value={form.confirmPassword} onChange={handleChange} error={errors.confirmPassword} autoComplete="new-password" />
             </div>
-            <button type="submit" className="btn btn-primary auth-submit">Create account</button>
+            <button type="submit" className="btn btn-primary auth-submit" disabled={loading}>
+    {loading ? 'Creating account...' : 'Create account'}
+</button>
           </form>
 
           <p className="auth-switch">

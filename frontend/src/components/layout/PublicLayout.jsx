@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/useAuth'
-import { roleHome } from '../../data/demoUsers'
+import { roleHome } from '../../data/roleHome'
 import './PublicLayout.css'
 
 function PublicLayout() {

@@ -1,8 +1,9 @@
+
 import { useState } from 'react'
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 import Icon from '../common/Icon'
 import { useAuth } from '../../context/useAuth'
-import { roleHome } from '../../data/demoUsers'
+import { roleHome } from '../../data/roleHome'
 import { navByRole, roleLabels } from '../../data/navigation'
 import './DashboardLayout.css'
 
@@ -20,24 +21,34 @@ function DashboardLayout() {
   }
 
   return (
-        <div className="dash-layout">
-      <a href="#main-content" className="skip-link">Skip to main content</a>
+    <div className="dash-layout">
+      <a href="#main-content" className="skip-link">
+        Skip to main content
+      </a>
+
       <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
-        <Link to={roleHome[user.role]} className="sidebar-brand" onClick={closeSidebar}>
+        <Link
+          to={roleHome[user.role]}
+          className="sidebar-brand"
+          onClick={closeSidebar}
+        >
           <span className="sidebar-mark" aria-hidden="true">C</span>
           <span>Complaint System</span>
         </Link>
 
         <nav className="sidebar-nav" aria-label="Sidebar">
           {navItems.map((item) => (
-            <NavLink key={item.to} to={item.to} end={item.exact !== false} onClick={closeSidebar}>
+            <NavLink
+              key={item.to}
+              to={item.to}
+              end={item.exact !== false}
+              onClick={closeSidebar}
+            >
               <Icon name={item.icon} size={20} />
               {item.label}
             </NavLink>
           ))}
         </nav>
-
-        <p className="sidebar-note">Demo mode: sample data only</p>
       </aside>
 
       <div
@@ -58,7 +69,10 @@ function DashboardLayout() {
             >
               <Icon name="menu" size={22} />
             </button>
-            <span className="topbar-title">{roleLabels[user.role]} Portal</span>
+
+            <span className="topbar-title">
+              {roleLabels[user.role]} Portal
+            </span>
           </div>
 
           <div className="topbar-user">
@@ -66,7 +80,12 @@ function DashboardLayout() {
               <div className="user-name">{user.name}</div>
               <div className="user-role">{roleLabels[user.role]}</div>
             </div>
-            <button type="button" className="btn btn-outline btn-sm" onClick={handleLogout}>
+
+            <button
+              type="button"
+              className="btn btn-outline btn-sm"
+              onClick={handleLogout}
+            >
               <Icon name="logout" size={16} />
               Log out
             </button>
