@@ -98,8 +98,11 @@ function ComplaintDetails() {
       </section>
 
       {waitingForConfirmation && (
-        <ResolutionPanel complaint={complaint} />
-      )}
+  <ResolutionPanel
+    complaint={complaint}
+    onUpdated={setComplaint}
+  />
+)}
 
       {complaint.studentConfirmed && (
         <section className="card confirmed-card" aria-labelledby="confirmed-heading">

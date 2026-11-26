@@ -44,15 +44,64 @@ function ComplaintsProvider({ children }) {
     return allComplaints
   }
 
-  // These actions will be connected when their backend endpoints are available.
-  const confirmResolution = async () => {
-    throw new Error('Student resolution confirmation is not supported by the backend yet.')
+  // Student confirms resolution and submits rating/feedback.
+  const confirmResolution = async (complaintId, rating, feedback) => {
+    const response = await api.patch(
+      `/api/complaints/${complaintId}/confirm`,
+      { rating, feedback }
+    )
+
+    const updated = response.data.data
+    const formatted = formatComplaint(updated)
+
+    setComplaints((previous) =>
+      previous.map((item) =>
+        item.id === complaintId
+          ? {
+              ...item,
+              status: updated.status,
+              studentConfirmed: updated.studentConfirmed,
+              rating: updated.rating,
+              feedback: updated.feedback,
+              updates: formatted.updates,
+            }
+          : item
+      )
+    )
+
+    return formatted
   }
 
-  const reopenComplaint = async () => {
-    throw new Error('Reopening a complaint is not supported by the backend yet.')
+  // Student reopens a resolved complaint.
+  const reopenComplaint = async (complaintId) => {
+    const response = await api.patch(
+      `/api/complaints/${complaintId}/reopen`
+    )
+
+    const updated = response.data.data
+    const formatted = formatComplaint(updated)
+
+    setComplaints((previous) =>
+      previous.map((item) =>
+        item.id === complaintId
+          ? {
+              ...item,
+              status: updated.status,
+              studentConfirmed: updated.studentConfirmed,
+              rating: updated.rating,
+              feedback: updated.feedback,
+              resolutionDetails: updated.resolutionDetails,
+              resolvedAt: updated.resolvedAt,
+              updates: formatted.updates,
+            }
+          : item
+      )
+    )
+
+    return formatted
   }
 
+  // Staff assignment.
   const assignComplaint = async () => {
     throw new Error('Staff assignment requires a staff ID and the staff directory integration.')
   }
