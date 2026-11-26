@@ -26,6 +26,27 @@ export const getAllComplaints = async (req, res, next) =>
     }
 };
 
+// Admin: Get all staff members
+export const getAllStaff = async (req, res, next) =>
+{
+    try
+    {
+        const staff = await User.find({ role: 'staff' })
+            .select('fullName email handlingDepartment')
+            .sort({ fullName: 1 });
+
+        return res.status(200).json(
+        {
+            success: true,
+            count: staff.length,
+            data: staff
+        });
+    }
+    catch(error)
+    {
+        next(error);
+    }
+};
 
 // Admin: Assign complaint to staff
 export const assignComplaint = async (req, res, next) =>

@@ -12,6 +12,7 @@ import {
 
 import {
     getAllComplaints,
+    getAllStaff,
     assignComplaint,
     updateComplaintStatus
 } from '../controllers/adminController.js';
@@ -24,6 +25,14 @@ router.get(
     protect,
     authorize('admin'),
     getAllComplaints
+);
+
+// Admin: View all staff members
+router.get(
+    '/staff',
+    protect,
+    authorize('admin'),
+    getAllStaff
 );
 
 // Admin: Assign complaint to staff
