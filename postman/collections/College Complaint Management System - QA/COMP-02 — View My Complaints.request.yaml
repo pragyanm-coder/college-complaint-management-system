@@ -1,0 +1,9 @@
+$kind: http-request
+description: ""
+url: http://localhost:5001/api/complaints/my
+method: GET
+auth:
+  type: bearer
+  credentials:
+    token: "{{json_web_token_0l05}}"
+order: 12000
