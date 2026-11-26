@@ -1,7 +1,8 @@
 
 import './AdminManage.css'
 
-function StaffForm({ member, onSaved, onCancel }) {
+function StaffForm({ member, onCancel })
+{
   return (
     <section className="card manage-form-card" aria-labelledby="staff-form-heading">
       <h2 id="staff-form-heading">
