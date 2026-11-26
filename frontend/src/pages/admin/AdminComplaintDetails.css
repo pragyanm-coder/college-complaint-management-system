@@ -1,0 +1,21 @@
+.assign-card {
+  margin-bottom: 20px;
+  background: #f8fbff;
+  border-color: #93c5fd;
+}
+
+.assign-card h2 {
+  font-size: 1.2rem;
+}
+
+.assign-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 20px;
+}
+
+@media (max-width: 640px) {
+  .assign-grid {
+    grid-template-columns: 1fr;
+  }
+}
