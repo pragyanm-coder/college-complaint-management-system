@@ -6,6 +6,8 @@ import {
     authorize
 } from '../middleware/authMiddleware.js';
 
+import upload from '../middleware/uploadMiddleware.js';
+
 import {
     validateComplaint
 } from '../validators/complaintValidator.js';
@@ -20,14 +22,16 @@ import {
 
 const router = express.Router();
 
-// Student: Submit a complaint
+// Student: Submit a complaint with optional attachments
 router.post(
     '/',
     protect,
     authorize('student'),
+    upload.array('attachments', 3),
     validateComplaint,
     createComplaint
 );
+
 // Student: Confirm resolution and submit feedback
 router.patch(
     '/:id/confirm',
@@ -43,6 +47,7 @@ router.patch(
     authorize('student'),
     reopenComplaint
 );
+
 // Student: View own complaints
 router.get(
     '/my',

@@ -1,13 +1,28 @@
 
+import uploadToCloudinary from '../utils/uploadToCloudinary.js';
 import mongoose from 'mongoose';
 import Complaint from '../models/Complaint.js';
+
 
 export const createComplaint = async (req, res, next) =>
 {
     try
     {
-        const { title, description, category, location } = req.body;
+        const { title, description, category, location, priority } = req.body;
 
+        // Upload attached files to Cloudinary
+        const attachments = [];
+
+        if(req.files && req.files.length > 0)
+        {
+            for(const file of req.files)
+            {
+                const uploadedFile = await uploadToCloudinary(file);
+                attachments.push(uploadedFile);
+            }
+        }
+
+        // Create complaint with attachment URLs
         const complaint = await Complaint.create(
         {
             title: title.trim(),
@@ -15,8 +30,9 @@ export const createComplaint = async (req, res, next) =>
             category,
             location: location.trim(),
             student: req.user.id,
-            priority: 'Medium',
+            priority: priority || 'Medium',
             status: 'Pending',
+            attachments,
             updates:
             [
                 {
@@ -39,6 +55,7 @@ export const createComplaint = async (req, res, next) =>
         next(error);
     }
 };
+
 
 
 export const getMyComplaints = async (req, res, next) =>

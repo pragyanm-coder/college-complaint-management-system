@@ -115,3 +115,53 @@
     font-size: 0.75rem;
   }
 }
+
+.complaint-attachments {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.attachment-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px;
+  border: 1px solid var(--border-color, #ddd);
+  border-radius: 8px;
+}
+
+.attachment-image {
+  width: 110px;
+  height: 85px;
+  object-fit: cover;
+  border-radius: 6px;
+  display: block;
+}
+
+.attachment-file-icon {
+  width: 70px;
+  height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fce8e8;
+  color: #b42318;
+  font-weight: 700;
+  border-radius: 6px;
+}
+
+.attachment-info {
+  min-width: 0;
+}
+
+.attachment-name {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.attachment-meta {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: #777;
+}

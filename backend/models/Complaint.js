@@ -44,6 +44,52 @@ const updateSchema = new mongoose.Schema(
 });
 
 
+// Uploaded complaint attachment schema
+const attachmentSchema = new mongoose.Schema(
+{
+    url:
+    {
+        type: String,
+        required: true
+    },
+
+    publicId:
+    {
+        type: String,
+        required: true
+    },
+
+    originalName:
+    {
+        type: String,
+        required: true
+    },
+
+    mimeType:
+    {
+        type: String,
+        enum:
+        [
+            'image/jpeg',
+            'image/png',
+            'image/webp',
+            'application/pdf'
+        ],
+        required: true
+    },
+
+    size:
+    {
+        type: Number,
+        required: true,
+        min: 0
+    }
+},
+{
+    _id: false
+});
+
+
 const complaintSchema = new mongoose.Schema(
 {
     title:
@@ -115,6 +161,13 @@ const complaintSchema = new mongoose.Schema(
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         default: null
+    },
+
+    // Complaint photos and documents
+    attachments:
+    {
+        type: [attachmentSchema],
+        default: []
     },
 
     resolutionDetails:

@@ -16,6 +16,16 @@ const initialForm = {
   description: '',
 }
 
+const MAX_FILES = 3
+const MAX_FILE_SIZE = 5 * 1024 * 1024
+
+const allowedTypes = [
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'application/pdf',
+]
+
 function validate(form) {
   const found = {}
   const title = form.title.trim()
@@ -36,6 +46,7 @@ function validate(form) {
 
 function RegisterComplaint() {
   const [form, setForm] = useState(initialForm)
+  const [files, setFiles] = useState([])
   const [errors, setErrors] = useState({})
   const [submitted, setSubmitted] = useState(null)
   const [loading, setLoading] = useState(false)
@@ -45,6 +56,39 @@ function RegisterComplaint() {
     const { name, value } = event.target
     setForm({ ...form, [name]: value })
     setErrors({ ...errors, [name]: '' })
+    setApiError('')
+  }
+
+  const handleFileChange = (event) => {
+    const selectedFiles = Array.from(event.target.files || [])
+
+    if (selectedFiles.length > MAX_FILES) {
+      setApiError('You can upload a maximum of 3 files.')
+      event.target.value = ''
+      return
+    }
+
+    const invalidType = selectedFiles.find(
+      file => !allowedTypes.includes(file.type)
+    )
+
+    if (invalidType) {
+      setApiError('Only JPG, PNG, WEBP and PDF files are allowed.')
+      event.target.value = ''
+      return
+    }
+
+    const oversizedFile = selectedFiles.find(
+      file => file.size > MAX_FILE_SIZE
+    )
+
+    if (oversizedFile) {
+      setApiError('Each file must be smaller than 5 MB.')
+      event.target.value = ''
+      return
+    }
+
+    setFiles(selectedFiles)
     setApiError('')
   }
 
@@ -60,13 +104,19 @@ function RegisterComplaint() {
       setLoading(true)
       setApiError('')
 
-      const response = await api.post('/api/complaints', {
-        title: form.title.trim(),
-        category: form.category,
-        priority: form.priority,
-        location: form.location.trim(),
-        description: form.description.trim(),
+      const formData = new FormData()
+
+      formData.append('title', form.title.trim())
+      formData.append('category', form.category)
+      formData.append('priority', form.priority)
+      formData.append('location', form.location.trim())
+      formData.append('description', form.description.trim())
+
+      files.forEach((file) => {
+        formData.append('attachments', file)
       })
+
+      const response = await api.post('/api/complaints', formData)
 
       const complaint = response.data.data
 
@@ -78,7 +128,8 @@ function RegisterComplaint() {
       window.scrollTo(0, 0)
     } catch (error) {
       setApiError(
-        error.response?.data?.message || 'Unable to submit complaint. Please try again.'
+        error.response?.data?.message ||
+        'Unable to submit complaint. Please try again.'
       )
     } finally {
       setLoading(false)
@@ -87,6 +138,7 @@ function RegisterComplaint() {
 
   const startAnother = () => {
     setForm(initialForm)
+    setFiles([])
     setErrors({})
     setSubmitted(null)
     setApiError('')
@@ -106,6 +158,11 @@ function RegisterComplaint() {
             <strong>Pending</strong>. The admin will review it and assign it to the right
             department.
           </p>
+          {submitted.attachments?.length > 0 && (
+            <p>
+              {submitted.attachments.length} attachment(s) uploaded successfully.
+            </p>
+          )}
           <div className="form-actions">
             <Link to="/student/complaints" className="btn btn-primary">View My Complaints</Link>
             <button type="button" className="btn btn-outline" onClick={startAnother}>
@@ -175,6 +232,35 @@ function RegisterComplaint() {
           error={errors.description}
           hint={`${form.description.length}/1000 characters. Explain what happened and since when.`}
         />
+
+        <div className="form-field">
+          <label htmlFor="complaint-attachments">
+            Photos or documents (optional)
+          </label>
+
+          <input
+            id="complaint-attachments"
+            type="file"
+            multiple
+            accept=".jpg,.jpeg,.png,.webp,.pdf"
+            onChange={handleFileChange}
+            disabled={loading}
+          />
+
+          <small>
+            Upload up to 3 files. JPG, PNG, WEBP or PDF. Maximum 5 MB per file.
+          </small>
+
+          {files.length > 0 && (
+            <ul className="attachment-list">
+              {files.map((file, index) => (
+                <li key={`${file.name}-${index}`}>
+                  {file.name} ({(file.size / (1024 * 1024)).toFixed(2)} MB)
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
 
         {apiError && <p className="form-error">{apiError}</p>}
 
