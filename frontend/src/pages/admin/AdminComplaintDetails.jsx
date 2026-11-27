@@ -43,6 +43,7 @@ function AdminComplaintDetails() {
           studentRollNumber: data.student?.rollNumber || '',
           department: data.assignedStaff?.handlingDepartment || '',
           assignedStaff: data.assignedStaff?.fullName || '',
+          attachments: data.attachments || [],
           updates: (data.updates || []).map((item) => ({
             ...item,
             type: item.type === 'Comment' ? 'remark' : 'status',
@@ -147,49 +148,7 @@ function AdminComplaintDetails() {
         <ProgressTracker complaint={complaint} />
       </section>
 
-      <section className="card details-card">
-        <h2>Update complaint status</h2>
-
-        {notice && (
-          <div className="alert alert-info" role="status">{notice}</div>
-        )}
-
-        {error && (
-          <div className="alert alert-error" role="alert">{error}</div>
-        )}
-
-        <form onSubmit={handleStatusUpdate}>
-          <div className="form-group">
-            <label htmlFor="admin-status">Select status</label>
-
-            <select
-              id="admin-status"
-              value={status}
-              onChange={(event) => setStatus(event.target.value)}
-              disabled={updating}
-            >
-              <option value="Pending">Pending</option>
-              <option value="In Progress">In Progress</option>
-              <option value="Resolved" disabled>
-                Resolved (not available through admin API)
-              </option>
-            </select>
-          </div>
-
-          <button
-            type="submit"
-            className="btn btn-primary"
-            disabled={updating || status === complaint.status}
-          >
-            {updating ? 'Updating...' : 'Update status'}
-          </button>
-        </form>
-
-        <p className="muted-note">
-          Admin resolution is not available yet because the backend does not
-          currently provide a way to submit resolution details.
-        </p>
-      </section>
+      
 
       <AssignPanel complaint={complaint} />
 
@@ -220,6 +179,65 @@ function AdminComplaintDetails() {
               <dd className="detail-description">{complaint.description}</dd>
             </dl>
           </section>
+
+
+{complaint.attachments.length > 0 && (
+  <section
+    className="card details-card"
+    aria-labelledby="attachments-heading"
+  >
+    <h2 id="attachments-heading">Uploaded attachments</h2>
+
+    <div className="complaint-attachments">
+      {complaint.attachments.map((file, index) => {
+        const isImage = file.mimeType?.startsWith('image/')
+
+        return (
+          <div
+            className="attachment-item"
+            key={file.publicId || index}
+          >
+            {isImage ? (
+              <a
+                href={file.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="attachment-image-link"
+              >
+                <img
+                  src={file.url}
+                  alt={file.originalName}
+                  className="attachment-image"
+                />
+              </a>
+            ) : (
+              <div className="attachment-file-icon">
+                PDF
+              </div>
+            )}
+
+            <div className="attachment-info">
+              <a
+                href={file.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="attachment-name"
+              >
+                {file.originalName}
+              </a>
+
+              <p className="attachment-meta">
+                {file.mimeType?.split('/')[1]?.toUpperCase()} ·{' '}
+                {(file.size / 1024).toFixed(1)} KB
+              </p>
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  </section>
+)}
+
 
           <section className="card details-card" aria-labelledby="timeline-heading">
             <h2 id="timeline-heading">Progress and remarks</h2>

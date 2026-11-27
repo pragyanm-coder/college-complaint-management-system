@@ -26,6 +26,7 @@ export const getAllComplaints = async (req, res, next) =>
     }
 };
 
+
 // Admin: Get all staff members
 export const getAllStaff = async (req, res, next) =>
 {
@@ -47,6 +48,7 @@ export const getAllStaff = async (req, res, next) =>
         next(error);
     }
 };
+
 
 // Admin: Assign complaint to staff
 export const assignComplaint = async (req, res, next) =>
@@ -91,58 +93,76 @@ export const assignComplaint = async (req, res, next) =>
                 message: 'Complaint not found'
             });
         }
-        if(complaint.status === 'Resolved')
-{
-    return res.status(409).json(
-    {
-        success: false,
-        message: 'Cannot assign or reassign a resolved complaint'
-    });
-}
 
-       
-const previousStaffId = complaint.assignedStaff;
+        if(complaint.status === 'Resolved' || complaint.studentConfirmed)
+        {
+            return res.status(409).json(
+            {
+                success: false,
+                message: 'Cannot assign or reassign a resolved complaint'
+            });
+        }
 
-// Prevent assigning the same staff member again
-if(previousStaffId &&
-   previousStaffId.toString() === staff._id.toString())
-{
-    return res.status(200).json(
-    {
-        success: true,
-        message: 'Complaint is already assigned to this staff member',
-        data: complaint
-    });
-}
+        const previousStaffId = complaint.assignedStaff;
 
-let updateMessage;
+        // Prevent assigning the same staff member again
+        if(previousStaffId &&
+           previousStaffId.toString() === staff._id.toString())
+        {
+            return res.status(200).json(
+            {
+                success: true,
+                message: 'Complaint is already assigned to this staff member',
+                data: complaint
+            });
+        }
 
-if(previousStaffId)
-{
-    const previousStaff = await User.findById(previousStaffId);
+        let updateMessage;
 
-const previousStaffName = previousStaff
-    ? previousStaff.fullName
-    : 'previously assigned staff';
+        if(previousStaffId)
+        {
+            const previousStaff = await User.findById(previousStaffId);
 
-updateMessage = `Complaint reassigned from ${previousStaffName} to ${staff.fullName}`;
-}
-else
-{
-    updateMessage = `Complaint assigned to ${staff.fullName}`;
-}
+            const previousStaffName = previousStaff
+                ? previousStaff.fullName
+                : 'previously assigned staff';
 
-complaint.assignedStaff = staff._id;
+            updateMessage = `Complaint reassigned from ${previousStaffName} to ${staff.fullName}`;
+        }
+        else
+        {
+            updateMessage = `Complaint assigned to ${staff.fullName}`;
+        }
 
-complaint.updates.push(
-{
-    type: previousStaffId ? 'Reassigned' : 'Assigned',
-    author: req.user.id,
-    text: updateMessage
-});
+        const previousStatus = complaint.status;
 
-await complaint.save();
+        complaint.assignedStaff = staff._id;
 
+        // Automatically move Pending complaints to In Progress
+        if(complaint.status === 'Pending')
+        {
+            complaint.status = 'In Progress';
+        }
+
+        complaint.updates.push(
+        {
+            type: previousStaffId ? 'Reassigned' : 'Assigned',
+            author: req.user.id,
+            text: updateMessage
+        });
+
+        // Record the automatic status change in the timeline
+        if(previousStatus !== complaint.status)
+        {
+            complaint.updates.push(
+            {
+                type: 'Status Changed',
+                author: req.user.id,
+                text: `Status automatically changed from ${previousStatus} to ${complaint.status} after staff assignment`
+            });
+        }
+
+        await complaint.save();
 
         return res.status(200).json(
         {
@@ -159,6 +179,7 @@ await complaint.save();
 
 
 
+
 // Admin: Update complaint status
 export const updateComplaintStatus = async (req, res, next) =>
 {
@@ -166,7 +187,14 @@ export const updateComplaintStatus = async (req, res, next) =>
     {
         const { id } = req.params;
         const { status } = req.body;
-
+        if(status === 'Resolved')
+{
+    return res.status(403).json(
+    {
+        success: false,
+        message: 'Only assigned staff can resolve complaints'
+    });
+}
         if(!mongoose.Types.ObjectId.isValid(id))
         {
             return res.status(400).json(
