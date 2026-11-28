@@ -1,5 +1,4 @@
 
-
 import 'dotenv/config';
 import mongoose from 'mongoose';
 import { createInterface } from 'node:readline/promises';
@@ -44,11 +43,17 @@ const createUser = async () =>
             }
         }
 
-        const password = process.env.NEW_USER_PASSWORD;
+        const password = await rl.question('Password: ');
+        const confirmPassword = await rl.question('Confirm password: ');
 
-        if(!password || password.length < 8)
+        if(password.length < 8)
         {
-            throw new Error('Set NEW_USER_PASSWORD to a password of at least 8 characters');
+            throw new Error('Password must contain at least 8 characters');
+        }
+
+        if(password !== confirmPassword)
+        {
+            throw new Error('Passwords do not match');
         }
 
         await connectDB();
@@ -73,6 +78,7 @@ const createUser = async () =>
         console.log('Name:', user.fullName);
         console.log('Email:', user.email);
         console.log('Role:', user.role);
+        console.log('Password: Set successfully');
     }
     catch(error)
     {
