@@ -113,6 +113,61 @@ function StaffComplaintDetails() {
             </dl>
           </section>
 
+
+          {complaint.attachments?.length > 0 && (
+            <section className="card details-card complaint-attachments">
+              <h2>Attachments</h2>
+
+              <div className="attachment-list">
+                {complaint.attachments.map((file, index) => {
+                  const isImage = file.mimeType?.startsWith('image/')
+                  const isPdf = file.mimeType === 'application/pdf'
+
+                  return (
+                    <div
+                      className="attachment-item"
+                      key={file.publicId || index}
+                    >
+                      {isImage ? (
+                        <a
+                          href={file.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <img
+                            src={file.url}
+                            alt={file.originalName || 'Complaint attachment'}
+                            className="attachment-image"
+                          />
+                        </a>
+                      ) : (
+                        <div className="attachment-file-icon">
+                          {isPdf ? 'PDF' : 'FILE'}
+                        </div>
+                      )}
+
+                      <div className="attachment-info">
+                        <a
+                          href={file.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="attachment-name"
+                        >
+                          {file.originalName || 'View attachment'}
+                        </a>
+
+                        <span className="attachment-meta">
+                          {isPdf ? 'PDF document' : file.mimeType}
+                        </span>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </section>
+          )}
+
+
           <section className="card details-card" aria-labelledby="timeline-heading">
             <h2 id="timeline-heading">Progress and remarks</h2>
             <Timeline updates={complaint.updates} />
